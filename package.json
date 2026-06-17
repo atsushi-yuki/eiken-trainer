@@ -3,7 +3,7 @@
   "private": true,
   "version": "1.0.0",
   "type": "module",
-  "homepage": "https://YOUR_GITHUB_USERNAME.github.io/eiken-trainer/",
+  "homepage": "https://atsushi.yuki.github.io/eiken-trainer/",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
