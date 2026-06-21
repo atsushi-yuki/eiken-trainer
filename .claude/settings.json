@@ -2,7 +2,9 @@
   "permissions": {
     "allow": [
       "PowerShell(npm run build 2>&1)",
-      "Bash(node --input-type=module -e ' *)"
+      "Bash(node --input-type=module -e ' *)",
+      "Bash(npm run *)",
+      "Bash(node -e \"let d='';process.stdin.on\\('data',c=>d+=c\\).on\\('end',\\(\\)=>console.log\\(d.split\\(String.fromCharCode\\(10\\)\\).filter\\(l=>/built|error|transformed/i.test\\(l\\)\\).join\\(String.fromCharCode\\(10\\)\\)\\)\\)\")"
     ]
   }
 }

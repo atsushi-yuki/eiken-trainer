@@ -29,4 +29,40 @@ export const EXAMS = {
     ],
     final: { key: "3-final", name: "総合テスト" },
   },
+  "p2": {
+    mid: [
+      { key: "p2-mid-1", name: "中間1 現在完了進行形・過去完了", targets: ["present-perfect-prog", "past-perfect"] },
+      { key: "p2-mid-2", name: "中間2 関係副詞・仮定法過去", targets: ["relative-adv", "subjunctive-past"] },
+      { key: "p2-mid-3", name: "中間3 使役・分詞構文", targets: ["causative", "participle-constr"] },
+      { key: "p2-mid-4", name: "中間4 so/such・比較の応用", targets: ["so-such-that", "comparative-adv"] },
+    ],
+    final: { key: "p2-final", name: "総合テスト" },
+  },
+  "2": {
+    mid: [
+      { key: "2-mid-1", name: "中間1 仮定法過去完了・複合関係詞", targets: ["subjunctive-pp", "compound-rel"] },
+      { key: "2-mid-2", name: "中間2 分詞構文・倒置", targets: ["participle-adv", "inversion"] },
+      { key: "2-mid-3", name: "中間3 名詞節・完了不定詞", targets: ["noun-clause", "perfect-inf-gerund"] },
+      { key: "2-mid-4", name: "中間4 譲歩・強調構文", targets: ["concession", "emphasis"] },
+    ],
+    final: { key: "2-final", name: "総合テスト" },
+  },
+  "p1": {
+    mid: [
+      { key: "p1-mid-1", name: "中間1 願望・仮定法の倒置", targets: ["wish-asif", "inversion-subjunctive"] },
+      { key: "p1-mid-2", name: "中間2 助動詞+完了・関係詞応用", targets: ["modal-perfect", "advanced-relative"] },
+      { key: "p1-mid-3", name: "中間3 高度な接続・独立分詞構文", targets: ["advanced-conjunction", "participle-absolute"] },
+      { key: "p1-mid-4", name: "中間4 受動の慣用・比較の慣用", targets: ["special-passive", "advanced-comparison"] },
+    ],
+    final: { key: "p1-final", name: "総合テスト" },
+  },
+  "1": {
+    mid: [
+      { key: "1-mid-1", name: "中間1 仮定法特殊・強調倒置", targets: ["advanced-subjunctive", "emphatic-inversion"] },
+      { key: "1-mid-2", name: "中間2 助動詞慣用・無生物主語", targets: ["advanced-modal", "nominalization"] },
+      { key: "1-mid-3", name: "中間3 擬似分裂文・関係詞特殊", targets: ["cleft-pseudo", "advanced-relative-2"] },
+      { key: "1-mid-4", name: "中間4 論理接続・慣用構文", targets: ["discourse-connectors", "idiomatic-structure"] },
+    ],
+    final: { key: "1-final", name: "総合テスト" },
+  },
 };

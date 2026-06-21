@@ -1,0 +1,43 @@
+// 準1級 単語データ（基礎・応用 各15問のストックから毎回12問を抽出）
+export const VP1 = {
+  "v-basic": {
+    "name": "単語・基礎",
+    "questions": [
+      { id: "p1vb1", q: "「莫大な」は？", choices: ["enormous", "famous", "nervous", "curious"], ans: 0, exp: "enormous = 莫大な。" },
+      { id: "p1vb2", q: "「一時的な」は？", choices: ["temporary", "ordinary", "necessary", "voluntary"], ans: 0, exp: "temporary = 一時的な。" },
+      { id: "p1vb3", q: "「慎重な」は？", choices: ["cautious", "curious", "anxious", "obvious"], ans: 0, exp: "cautious = 慎重な。" },
+      { id: "p1vb4", q: "「豊富な」は？", choices: ["abundant", "reluctant", "constant", "distant"], ans: 0, exp: "abundant = 豊富な。" },
+      { id: "p1vb5", q: "「説得する」は？", choices: ["persuade", "invade", "parade", "upgrade"], ans: 0, exp: "persuade = 説得する。" },
+      { id: "p1vb6", q: "「強調する」は？", choices: ["emphasize", "realize", "organize", "criticize"], ans: 0, exp: "emphasize = 強調する。" },
+      { id: "p1vb7", q: "「取り組む」は？", choices: ["tackle", "tickle", "tangle", "tremble"], ans: 0, exp: "tackle = （問題に）取り組む。" },
+      { id: "p1vb8", q: "「一貫した」は？", choices: ["consistent", "persistent", "resistant", "insistent"], ans: 0, exp: "consistent = 一貫した。" },
+      { id: "p1vb9", q: "「明白な」は？", choices: ["evident", "violent", "ancient", "efficient"], ans: 0, exp: "evident = 明白な。" },
+      { id: "p1vb10", q: "「誇張する」は？", choices: ["exaggerate", "operate", "celebrate", "decorate"], ans: 0, exp: "exaggerate = 誇張する。" },
+      { id: "p1vb11", q: "「多様な」は？", choices: ["diverse", "reverse", "adverse", "universe"], ans: 0, exp: "diverse = 多様な。" },
+      { id: "p1vb12", q: "「緊急の」は？", choices: ["urgent", "current", "decent", "recent"], ans: 0, exp: "urgent = 緊急の。" },
+      { id: "p1vb13", q: "「控えめな」は？", choices: ["modest", "honest", "protest", "forest"], ans: 0, exp: "modest = 控えめな。" },
+      { id: "p1vb14", q: "「鋭い・激しい」は？", choices: ["acute", "cute", "route", "mute"], ans: 0, exp: "acute = 鋭い・激しい。" },
+      { id: "p1vb15", q: "「信頼できる」は？", choices: ["reliable", "valuable", "available", "comfortable"], ans: 0, exp: "reliable = 信頼できる。" },
+    ],
+  },
+  "v-adv": {
+    "name": "単語・応用",
+    "questions": [
+      { id: "p1va1", q: "「緩和する」は？", choices: ["alleviate", "elevate", "eliminate", "elaborate"], ans: 0, exp: "alleviate = 緩和する。" },
+      { id: "p1va2", q: "「高める」は？", choices: ["enhance", "enchant", "advance", "announce"], ans: 0, exp: "enhance = 高める。" },
+      { id: "p1va3", q: "「強いる」は？", choices: ["compel", "compile", "complete", "comply"], ans: 0, exp: "compel = 強いる。" },
+      { id: "p1va4", q: "「同時に起こる・一致する」は？", choices: ["coincide", "consider", "conclude", "conduct"], ans: 0, exp: "coincide = 同時に起こる。" },
+      { id: "p1va5", q: "「反論する」は？", choices: ["refute", "route", "recruit", "reunite"], ans: 0, exp: "refute = 反論する。" },
+      { id: "p1va6", q: "「称賛する」は？", choices: ["applaud", "applied", "appeal", "apply"], ans: 0, exp: "applaud = 称賛する。" },
+      { id: "p1va7", q: "「ためらう」は？", choices: ["hesitate", "imitate", "irritate", "initiate"], ans: 0, exp: "hesitate = ためらう。" },
+      { id: "p1va8", q: "「悪化する」は？", choices: ["deteriorate", "decorate", "dedicate", "designate"], ans: 0, exp: "deteriorate = 悪化する。" },
+      { id: "p1va9", q: "「軽蔑する」は？", choices: ["despise", "devise", "advise", "disguise"], ans: 0, exp: "despise = 軽蔑する。" },
+      { id: "p1va10", q: "「入念な」は？", choices: ["meticulous", "ridiculous", "miraculous", "marvelous"], ans: 0, exp: "meticulous = 入念な。" },
+      { id: "p1va11", q: "「偏見」は？", choices: ["prejudice", "practice", "prestige", "privilege"], ans: 0, exp: "prejudice = 偏見。" },
+      { id: "p1va12", q: "「率直な」は？", choices: ["candid", "splendid", "rigid", "vivid"], ans: 0, exp: "candid = 率直な。" },
+      { id: "p1va13", q: "「永続的な」は？", choices: ["permanent", "prominent", "persistent", "prevalent"], ans: 0, exp: "permanent = 永続的な。" },
+      { id: "p1va14", q: "「思慮深い・賢明な」は？", choices: ["prudent", "student", "evident", "resident"], ans: 0, exp: "prudent = 思慮深い。" },
+      { id: "p1va15", q: "「寛大な」は？", choices: ["generous", "numerous", "dangerous", "enormous"], ans: 0, exp: "generous = 寛大な。" },
+    ],
+  },
+};

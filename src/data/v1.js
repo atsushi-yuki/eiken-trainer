@@ -1,0 +1,43 @@
+// 1級 単語データ（基礎・応用 各15問のストックから毎回12問を抽出）
+export const V1 = {
+  "v-basic": {
+    "name": "単語・基礎",
+    "questions": [
+      { id: "1vb1", q: "「簡潔な」は？", choices: ["concise", "precise", "decisive", "concrete"], ans: 0, exp: "concise = 簡潔な。" },
+      { id: "1vb2", q: "「頑固な」は？", choices: ["stubborn", "sudden", "sullen", "swollen"], ans: 0, exp: "stubborn = 頑固な。" },
+      { id: "1vb3", q: "「退屈な」は？", choices: ["tedious", "devious", "obvious", "envious"], ans: 0, exp: "tedious = 退屈な。" },
+      { id: "1vb4", q: "「不可欠な」は？", choices: ["indispensable", "responsible", "comparable", "reasonable"], ans: 0, exp: "indispensable = 不可欠な。" },
+      { id: "1vb5", q: "「衰退・低下」は？", choices: ["decline", "recline", "incline", "define"], ans: 0, exp: "decline = 衰退・低下。" },
+      { id: "1vb6", q: "「称賛」は？", choices: ["acclaim", "reclaim", "exclaim", "proclaim"], ans: 0, exp: "acclaim = 称賛。" },
+      { id: "1vb7", q: "「厳格な」は？", choices: ["rigorous", "vigorous", "generous", "numerous"], ans: 0, exp: "rigorous = 厳格な。" },
+      { id: "1vb8", q: "「巧妙な・独創的な」は？", choices: ["ingenious", "generous", "enormous", "gracious"], ans: 0, exp: "ingenious = 巧妙な・独創的な。" },
+      { id: "1vb9", q: "「顕著な」は？", choices: ["remarkable", "removable", "returnable", "reasonable"], ans: 0, exp: "remarkable = 顕著な。" },
+      { id: "1vb10", q: "「促進する」は？", choices: ["facilitate", "fascinate", "fabricate", "formulate"], ans: 0, exp: "facilitate = 促進する。" },
+      { id: "1vb11", q: "「抑制する」は？", choices: ["restrain", "remain", "retain", "refrain"], ans: 0, exp: "restrain = 抑制する。" },
+      { id: "1vb12", q: "「矛盾」は？", choices: ["contradiction", "contraction", "contribution", "construction"], ans: 0, exp: "contradiction = 矛盾。" },
+      { id: "1vb13", q: "「本物の」は？", choices: ["authentic", "automatic", "aesthetic", "athletic"], ans: 0, exp: "authentic = 本物の。" },
+      { id: "1vb14", q: "「減少する」は？", choices: ["diminish", "distinguish", "demolish", "disturb"], ans: 0, exp: "diminish = 減少する。" },
+      { id: "1vb15", q: "「分別のある」は？", choices: ["sensible", "sensitive", "sensational", "sentimental"], ans: 0, exp: "sensible = 分別のある。" },
+    ],
+  },
+  "v-adv": {
+    "name": "単語・応用",
+    "questions": [
+      { id: "1va1", q: "「至る所にある」は？", choices: ["ubiquitous", "conspicuous", "ambiguous", "ingenious"], ans: 0, exp: "ubiquitous = 至る所にある。" },
+      { id: "1va2", q: "「つかの間の」は？", choices: ["ephemeral", "eternal", "external", "internal"], ans: 0, exp: "ephemeral = つかの間の。" },
+      { id: "1va3", q: "「和解させる」は？", choices: ["reconcile", "recognize", "reconsider", "reconstruct"], ans: 0, exp: "reconcile = 和解させる。" },
+      { id: "1va4", q: "「激怒させる」は？", choices: ["infuriate", "illustrate", "illuminate", "infiltrate"], ans: 0, exp: "infuriate = 激怒させる。" },
+      { id: "1va5", q: "「公然と非難する」は？", choices: ["denounce", "announce", "pronounce", "renounce"], ans: 0, exp: "denounce = 公然と非難する。" },
+      { id: "1va6", q: "「高慢な」は？", choices: ["arrogant", "fragrant", "ignorant", "immigrant"], ans: 0, exp: "arrogant = 高慢な。" },
+      { id: "1va7", q: "「元に戻せない」は？", choices: ["irreversible", "irresistible", "irresponsible", "irrelevant"], ans: 0, exp: "irreversible = 元に戻せない。" },
+      { id: "1va8", q: "「油断のない」は？", choices: ["vigilant", "brilliant", "reluctant", "relevant"], ans: 0, exp: "vigilant = 油断のない。" },
+      { id: "1va9", q: "「うわべだけの」は？", choices: ["superficial", "beneficial", "artificial", "official"], ans: 0, exp: "superficial = うわべだけの。" },
+      { id: "1va10", q: "「強い反感・敵意」は？", choices: ["animosity", "curiosity", "generosity", "anonymity"], ans: 0, exp: "animosity = 強い反感。" },
+      { id: "1va11", q: "「大胆な」は？", choices: ["audacious", "spacious", "gracious", "precious"], ans: 0, exp: "audacious = 大胆な。" },
+      { id: "1va12", q: "「撲滅する」は？", choices: ["eradicate", "educate", "eliminate", "elaborate"], ans: 0, exp: "eradicate = 撲滅する。" },
+      { id: "1va13", q: "「飽くなき・満たされない」は？", choices: ["insatiable", "inevitable", "invaluable", "inseparable"], ans: 0, exp: "insatiable = 飽くなき。" },
+      { id: "1va14", q: "「粘り強い・不屈の」は？", choices: ["tenacious", "tedious", "spacious", "vivacious"], ans: 0, exp: "tenacious = 粘り強い。" },
+      { id: "1va15", q: "「厳粛な」は？", choices: ["solemn", "column", "solid", "solar"], ans: 0, exp: "solemn = 厳粛な。" },
+    ],
+  },
+};

@@ -1,0 +1,43 @@
+// 2級 単語データ（基礎・応用 各15問のストックから毎回12問を抽出）
+export const V2 = {
+  "v-basic": {
+    "name": "単語・基礎",
+    "questions": [
+      { id: "2vb1", q: "「維持する」は？", choices: ["maintain", "contain", "obtain", "remain"], ans: 0, exp: "maintain = 維持する。" },
+      { id: "2vb2", q: "「影響」は？", choices: ["influence", "experience", "audience", "difference"], ans: 0, exp: "influence = 影響。" },
+      { id: "2vb3", q: "「申し込む・応募する」は？", choices: ["apply", "supply", "reply", "imply"], ans: 0, exp: "apply = 申し込む。" },
+      { id: "2vb4", q: "「努力」は？", choices: ["effort", "effect", "affair", "offer"], ans: 0, exp: "effort = 努力。" },
+      { id: "2vb5", q: "「利益」は？", choices: ["profit", "product", "project", "protect"], ans: 0, exp: "profit = 利益。" },
+      { id: "2vb6", q: "「雇う」は？", choices: ["employ", "enjoy", "empty", "apply"], ans: 0, exp: "employ = 雇う。" },
+      { id: "2vb7", q: "「解決する」は？", choices: ["solve", "serve", "save", "seek"], ans: 0, exp: "solve = 解決する。" },
+      { id: "2vb8", q: "「期待する」は？", choices: ["expect", "respect", "inspect", "suspect"], ans: 0, exp: "expect = 期待する。" },
+      { id: "2vb9", q: "「価値」は？", choices: ["value", "volume", "voyage", "virtue"], ans: 0, exp: "value = 価値。" },
+      { id: "2vb10", q: "「状況」は？", choices: ["situation", "education", "population", "operation"], ans: 0, exp: "situation = 状況。" },
+      { id: "2vb11", q: "「提供する」は？", choices: ["provide", "divide", "decide", "guide"], ans: 0, exp: "provide = 提供する。" },
+      { id: "2vb12", q: "「主張する」は？", choices: ["claim", "blame", "flame", "clear"], ans: 0, exp: "claim = 主張する。" },
+      { id: "2vb13", q: "「効果的な」は？", choices: ["effective", "attractive", "expensive", "creative"], ans: 0, exp: "effective = 効果的な。" },
+      { id: "2vb14", q: "「個人の」は？", choices: ["individual", "industrial", "identical", "incredible"], ans: 0, exp: "individual = 個人の。" },
+      { id: "2vb15", q: "「自信がある」は？", choices: ["confident", "different", "excellent", "violent"], ans: 0, exp: "confident = 自信がある。" },
+    ],
+  },
+  "v-adv": {
+    "name": "単語・応用",
+    "questions": [
+      { id: "2va1", q: "「獲得する」は？", choices: ["obtain", "contain", "maintain", "sustain"], ans: 0, exp: "obtain = 獲得する。" },
+      { id: "2va2", q: "「結論」は？", choices: ["conclusion", "condition", "connection", "conversation"], ans: 0, exp: "conclusion = 結論。" },
+      { id: "2va3", q: "「推薦する」は？", choices: ["recommend", "remember", "remind", "remove"], ans: 0, exp: "recommend = 推薦する。" },
+      { id: "2va4", q: "「評価する」は？", choices: ["evaluate", "educate", "eliminate", "decorate"], ans: 0, exp: "evaluate = 評価する。" },
+      { id: "2va5", q: "「示す・指し示す」は？", choices: ["indicate", "dedicate", "educate", "decorate"], ans: 0, exp: "indicate = 示す。" },
+      { id: "2va6", q: "「取り除く」は？", choices: ["eliminate", "illuminate", "imitate", "initiate"], ans: 0, exp: "eliminate = 取り除く。" },
+      { id: "2va7", q: "「想定する」は？", choices: ["assume", "resume", "consume", "costume"], ans: 0, exp: "assume = 想定する。" },
+      { id: "2va8", q: "「暗に意味する」は？", choices: ["imply", "apply", "supply", "reply"], ans: 0, exp: "imply = 暗に意味する。" },
+      { id: "2va9", q: "「明らかな」は？", choices: ["obvious", "previous", "various", "serious"], ans: 0, exp: "obvious = 明らかな。" },
+      { id: "2va10", q: "「適切な」は？", choices: ["appropriate", "approximate", "appreciate", "approach"], ans: 0, exp: "appropriate = 適切な。" },
+      { id: "2va11", q: "「重要性」は？", choices: ["significance", "signature", "significant", "silence"], ans: 0, exp: "significance = 重要性。" },
+      { id: "2va12", q: "「影響力のある」は？", choices: ["influential", "essential", "potential", "financial"], ans: 0, exp: "influential = 影響力のある。" },
+      { id: "2va13", q: "「効率」は？", choices: ["efficiency", "frequency", "emergency", "tendency"], ans: 0, exp: "efficiency = 効率。" },
+      { id: "2va14", q: "「結論づける」は？", choices: ["conclude", "include", "exclude", "preclude"], ans: 0, exp: "conclude = 結論づける。" },
+      { id: "2va15", q: "「一致する・対応する」は？", choices: ["correspond", "respond", "responsible", "correct"], ans: 0, exp: "correspond = 一致する。" },
+    ],
+  },
+};

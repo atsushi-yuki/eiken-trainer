@@ -5,7 +5,7 @@ import { BANK, EXAMS } from "./bank.js";
 // ════════════════════════════════════════════════════════════
 // 定義
 // ════════════════════════════════════════════════════════════
-const GRADE_ORDER = ["5", "4", "3"];
+const GRADE_ORDER = ["5", "4", "3", "p2", "2", "p1", "1"];
 const VOCAB_UNITS = ["v-basic", "v-adv"];
 const VOCAB_META = {
   "v-basic": { name: "単語・基礎", icon: "V", tone: "#0f9d76" },
@@ -98,6 +98,33 @@ export default function EikenApp() {
   function persist(next) { setRecords(next); try { window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(next)); } catch (e) {} }
   function persistExams(next) { setExamRecords(next); try { window.localStorage?.setItem(EXAM_STORAGE_KEY, JSON.stringify(next)); } catch (e) {} }
   function persistSessions(next) { setSessionRecords(next); try { window.localStorage?.setItem(SESSION_STORAGE_KEY, JSON.stringify(next)); } catch (e) {} }
+
+  // ── ブラウザの戻る/進む対応 ──
+  // 画面遷移ごとに履歴へ積み、popstate で前の画面に戻す。
+  // test/result は履歴復元が複雑なため、戻るときは級マップ（級が無ければホーム）に着地させる。
+  const lastNavRef = useRef("home");
+  useEffect(() => {
+    try { window.history.replaceState({ view: "home", grade: null }, ""); } catch (e) {}
+    const onPop = (e) => {
+      const st = e.state || { view: "home", grade: null };
+      const next = (st.view === "test" || st.view === "result") ? (st.grade ? "gradeMap" : "home") : st.view;
+      lastNavRef.current = next;
+      if (st.grade) setGrade(st.grade);
+      setView(next);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, []);
+  useEffect(() => {
+    if (view === lastNavRef.current) return; // popstate 由来の変更は積み直さない
+    lastNavRef.current = view;
+    const st = { view, grade };
+    try {
+      // result は直前の test エントリに重ねて、戻る1回で級マップへ戻れるようにする
+      if (view === "result") window.history.replaceState(st, "");
+      else window.history.pushState(st, "");
+    } catch (e) {}
+  }, [view, grade]);
 
   useEffect(() => {
     if (view !== "test") { clearInterval(timerRef.current); return; }

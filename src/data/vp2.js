@@ -1,0 +1,43 @@
+// 準2級 単語データ（基礎・応用 各15問のストックから毎回12問を抽出）
+export const VP2 = {
+  "v-basic": {
+    "name": "単語・基礎",
+    "questions": [
+      { id: "p2vb1", q: "「増加する」は？", choices: ["increase", "decrease", "reduce", "refuse"], ans: 0, exp: "increase = 増加する。" },
+      { id: "p2vb2", q: "「減らす」は？", choices: ["reduce", "increase", "raise", "repeat"], ans: 0, exp: "reduce = 減らす。" },
+      { id: "p2vb3", q: "「招待する」は？", choices: ["invite", "invent", "invest", "invade"], ans: 0, exp: "invite = 招待する。" },
+      { id: "p2vb4", q: "「説明する」は？", choices: ["explain", "complain", "contain", "remain"], ans: 0, exp: "explain = 説明する。" },
+      { id: "p2vb5", q: "「想像する」は？", choices: ["imagine", "manage", "measure", "message"], ans: 0, exp: "imagine = 想像する。" },
+      { id: "p2vb6", q: "「準備する」は？", choices: ["prepare", "repair", "compare", "declare"], ans: 0, exp: "prepare = 準備する。" },
+      { id: "p2vb7", q: "「影響を与える」は？", choices: ["affect", "expect", "accept", "attend"], ans: 0, exp: "affect = 影響を与える。" },
+      { id: "p2vb8", q: "「経験」は？", choices: ["experience", "expression", "expert", "express"], ans: 0, exp: "experience = 経験。" },
+      { id: "p2vb9", q: "「政府」は？", choices: ["government", "movement", "agreement", "argument"], ans: 0, exp: "government = 政府。" },
+      { id: "p2vb10", q: "「環境」は？", choices: ["environment", "equipment", "excitement", "entertainment"], ans: 0, exp: "environment = 環境。" },
+      { id: "p2vb11", q: "「必要な」は？", choices: ["necessary", "ordinary", "secondary", "temporary"], ans: 0, exp: "necessary = 必要な。" },
+      { id: "p2vb12", q: "「興奮した」は？", choices: ["excited", "exciting", "expected", "excellent"], ans: 0, exp: "excited = （人が）興奮した。" },
+      { id: "p2vb13", q: "「機会」は？", choices: ["opportunity", "community", "quantity", "quality"], ans: 0, exp: "opportunity = 機会。" },
+      { id: "p2vb14", q: "「結果」は？", choices: ["result", "reason", "return", "respect"], ans: 0, exp: "result = 結果。" },
+      { id: "p2vb15", q: "「決定する」は？", choices: ["decide", "divide", "describe", "deliver"], ans: 0, exp: "decide = 決定する。" },
+    ],
+  },
+  "v-adv": {
+    "name": "単語・応用",
+    "questions": [
+      { id: "p2va1", q: "「達成する」は？", choices: ["achieve", "arrive", "agree", "argue"], ans: 0, exp: "achieve = 達成する。" },
+      { id: "p2va2", q: "「避ける」は？", choices: ["avoid", "award", "affect", "attend"], ans: 0, exp: "avoid = 避ける。" },
+      { id: "p2va3", q: "「認める」は？", choices: ["admit", "permit", "submit", "commit"], ans: 0, exp: "admit = 認める。" },
+      { id: "p2va4", q: "「提案する」は？", choices: ["suggest", "respect", "protect", "collect"], ans: 0, exp: "suggest = 提案する。" },
+      { id: "p2va5", q: "「比較する」は？", choices: ["compare", "prepare", "repair", "declare"], ans: 0, exp: "compare = 比較する。" },
+      { id: "p2va6", q: "「表現する」は？", choices: ["express", "explain", "explore", "expand"], ans: 0, exp: "express = 表現する。" },
+      { id: "p2va7", q: "「続く」は？", choices: ["continue", "contain", "control", "contact"], ans: 0, exp: "continue = 続く。" },
+      { id: "p2va8", q: "「改善する」は？", choices: ["improve", "approve", "prove", "remove"], ans: 0, exp: "improve = 改善する。" },
+      { id: "p2va9", q: "「議論する」は？", choices: ["discuss", "dismiss", "display", "distress"], ans: 0, exp: "discuss = 議論する。" },
+      { id: "p2va10", q: "「含む」は？", choices: ["include", "conclude", "exclude", "contain"], ans: 0, exp: "include = 含む。" },
+      { id: "p2va11", q: "「拒否する」は？", choices: ["refuse", "reduce", "recover", "replace"], ans: 0, exp: "refuse = 拒否する。" },
+      { id: "p2va12", q: "「翻訳する」は？", choices: ["translate", "transfer", "transform", "transport"], ans: 0, exp: "translate = 翻訳する。" },
+      { id: "p2va13", q: "「文化」は？", choices: ["culture", "picture", "feature", "nature"], ans: 0, exp: "culture = 文化。" },
+      { id: "p2va14", q: "「性格」は？", choices: ["character", "chapter", "champion", "challenge"], ans: 0, exp: "character = 性格・登場人物。" },
+      { id: "p2va15", q: "「責任」は？", choices: ["responsibility", "possibility", "ability", "activity"], ans: 0, exp: "responsibility = 責任。" },
+    ],
+  },
+};
