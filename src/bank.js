@@ -12,3 +12,6 @@ export const BANK = {
   "4": { label: "4級", sub: "中2程度", grammar: G4, vocab: V4 },
   "3": { label: "3級", sub: "中卒程度", grammar: G3, vocab: V3 },
 };
+
+// 中間テスト・総合テストの定義（再エクスポート）
+export { EXAMS } from "./data/exams.js";

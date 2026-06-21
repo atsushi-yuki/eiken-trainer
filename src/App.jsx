@@ -1,6 +1,6 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
-import { BANK } from "./bank.js";
+import { BANK, EXAMS } from "./bank.js";
 
 // ════════════════════════════════════════════════════════════
 // 定義
@@ -12,9 +12,28 @@ const VOCAB_META = {
   "v-adv": { name: "単語・応用", icon: "V+", tone: "#0a7d5c" },
 };
 const GRAMMAR_TONE = "#2b5fff";
+const EXAM_TONE = "#6b4fd1";   // 中間・総合テスト用トーン（紫）
 const SECONDS_PER_Q = 75;
+const GRAMMAR_PER_TEST = 5;  // 文法ターゲットはストック（約15問）から5問抽出
 const VOCAB_PER_TEST = 12;   // 単語ユニットはストックから12問抽出
 const STORAGE_KEY = "eiken_targeted_v1";
+const EXAM_STORAGE_KEY = "eiken_exams_v1";
+const SESSION_STORAGE_KEY = "eiken_sessions_v1";
+// 習得率は直近3回のテスト正答率の重み付け平均（直近 / 1つ前 / 2つ前）。
+const SESSION_WEIGHTS = [0.5, 0.3, 0.2];
+
+// テストの出題数・合格ライン
+const MID_PICK = 12;            // 中間テストの出題数（プールが少なければ全問）
+const MID_PASS = 0.7;          // 中間テスト合格ライン（70%）
+const FINAL_GRAMMAR_PICK = 20;  // 総合テストの文法出題数
+const FINAL_VOCAB_PICK = 10;    // 総合テストの単語出題数
+const FINAL_PASS = 0.65;        // 総合テスト合格ライン（65%）
+
+function examPassLine(target) { return target?.examType === "final" ? FINAL_PASS : MID_PASS; }
+function findExam(grade, target) {
+  const E = EXAMS[grade]; if (!E) return null;
+  return target.examType === "final" ? E.final : E.mid.find((m) => m.key === target.key);
+}
 
 // 習熟ラベル（正答率ベース）
 function masteryLabel(rate) {
@@ -22,16 +41,33 @@ function masteryLabel(rate) {
   if (rate >= 0.6) return { text: "あと一歩", color: "#c98a16" };
   return { text: "要強化", color: "#c0392b" };
 }
-// 母数が小さい文法ターゲットは「全問を直近正解」できているかで習得確定
+// 習得率 = 直近3回のテスト正答率の重み付け平均（直近50% / 1つ前30% / 2つ前20%）。
+// 受験回数が1〜2回のときは、その回だけで（重みを正規化して）算出する。
+function weightedRate(history) {
+  if (!history || history.length === 0) return null;
+  const recent = history.slice(-3).reverse(); // 新しい順
+  const w = SESSION_WEIGHTS.slice(0, recent.length);
+  const sumW = w.reduce((a, b) => a + b, 0);
+  return recent.reduce((s, r, i) => s + r * w[i], 0) / sumW;
+}
 function targetMastery(st) {
   if (st.rate === null) return null;
-  const base = masteryLabel(st.rate);
-  // 全問のうち8割以上を直近正解していないと「習得」にしない
-  if (base.text === "習得" && st.masteredRatio < 0.8) return { text: "あと一歩", color: "#c98a16" };
-  return base;
+  return masteryLabel(st.rate);
 }
 function fmtTime(s) { const m = Math.floor(s / 60); return `${m}:${String(s % 60).padStart(2, "0")}`; }
 function shuffle(a) { a = [...a]; for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
+// 選択肢をシャッフルし、正解インデックス(ans)を新しい位置に追従させる
+function shuffleChoices(q) {
+  const correct = q.choices[q.ans];
+  const choices = shuffle(q.choices);
+  return { ...q, choices, ans: choices.indexOf(correct) };
+}
+// 同じ級の次の文法ターゲットの key を返す（無ければ null）
+function nextGrammarTarget(grade, key) {
+  const list = BANK[grade].grammar;
+  const i = list.findIndex((t) => t.key === key);
+  return i >= 0 && i + 1 < list.length ? list[i + 1].key : null;
+}
 
 // ════════════════════════════════════════════════════════════
 // メイン
@@ -50,11 +86,18 @@ export default function EikenApp() {
   const [timeLeft, setTimeLeft] = useState(0);
   const timerRef = useRef(null);
   const [records, setRecords] = useState({});
+  const [examRecords, setExamRecords] = useState({});
+  // ターゲット/ユニットごとのテスト正答率の履歴（直近3回ぶんを習得率に使う）。
+  const [sessionRecords, setSessionRecords] = useState({});
 
   useEffect(() => {
     try { const raw = window.localStorage?.getItem(STORAGE_KEY); if (raw) setRecords(JSON.parse(raw)); } catch (e) {}
+    try { const raw = window.localStorage?.getItem(EXAM_STORAGE_KEY); if (raw) setExamRecords(JSON.parse(raw)); } catch (e) {}
+    try { const raw = window.localStorage?.getItem(SESSION_STORAGE_KEY); if (raw) setSessionRecords(JSON.parse(raw)); } catch (e) {}
   }, []);
   function persist(next) { setRecords(next); try { window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(next)); } catch (e) {} }
+  function persistExams(next) { setExamRecords(next); try { window.localStorage?.setItem(EXAM_STORAGE_KEY, JSON.stringify(next)); } catch (e) {} }
+  function persistSessions(next) { setSessionRecords(next); try { window.localStorage?.setItem(SESSION_STORAGE_KEY, JSON.stringify(next)); } catch (e) {} }
 
   useEffect(() => {
     if (view !== "test") { clearInterval(timerRef.current); return; }
@@ -64,7 +107,25 @@ export default function EikenApp() {
     return () => clearInterval(timerRef.current);
   }, [view]);
 
-  // 受験対象の問題プールを取得
+  // テスト完了時に結果を記録。exam は合否、文法/単語ターゲットは正答率の履歴を残す。
+  useEffect(() => {
+    if (view !== "result" || !target || sessionResults.length === 0) return;
+    const correct = sessionResults.filter((r) => r.correct).length;
+    const total = sessionResults.length;
+    const rate = total ? correct / total : 0;
+    if (target.kind === "exam") {
+      const pass = rate >= examPassLine(target);
+      persistExams({ ...examRecords, [target.key]: { rate, correct, total, pass, ts: Date.now() } });
+    } else {
+      // 文法ターゲット/単語ユニット: 直近3回ぶんの正答率を保持
+      const k = `${grade}|${target.key}`;
+      const hist = [...(sessionRecords[k] || []), rate].slice(-3);
+      persistSessions({ ...sessionRecords, [k]: hist });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
+
+  // 受験対象の問題プールを取得（単一ターゲット/ユニット用）
   function getPool(g, tgt) {
     if (tgt.kind === "grammar") {
       const t = BANK[g].grammar.find((x) => x.key === tgt.key);
@@ -72,19 +133,36 @@ export default function EikenApp() {
     }
     return BANK[g].vocab[tgt.key].questions;
   }
+  const allGrammarQuestions = (g) => BANK[g].grammar.flatMap((t) => t.questions);
+  const allVocabQuestions = (g) => VOCAB_UNITS.flatMap((u) => BANK[g].vocab[u].questions);
+
+  // 中間・総合テストの出題を構築
+  function buildExamQuestions(g, tgt, m) {
+    const onlyWrong = (qs) => { const w = qs.filter((q) => records[q.id]?.lastWrong); return w.length ? w : qs; };
+    if (tgt.examType === "final") {
+      let gr = allGrammarQuestions(g), vo = allVocabQuestions(g);
+      if (m === "review") { gr = onlyWrong(gr); vo = onlyWrong(vo); }
+      const picked = [...shuffle(gr).slice(0, FINAL_GRAMMAR_PICK), ...shuffle(vo).slice(0, FINAL_VOCAB_PICK)];
+      return shuffle(picked);
+    }
+    const exam = EXAMS[g].mid.find((x) => x.key === tgt.key);
+    const pool = (exam?.targets || []).flatMap((k) => { const t = BANK[g].grammar.find((x) => x.key === k); return t ? t.questions : []; });
+    return shuffle(m === "review" ? onlyWrong(pool) : pool).slice(0, MID_PICK);
+  }
 
   function startTest(g, tgt, m = "normal") {
-    const pool = getPool(g, tgt);
     let qs;
-    if (m === "review") {
-      const wrong = pool.filter((q) => records[q.id]?.lastWrong);
-      const base = wrong.length ? wrong : pool;
-      // 文法は全問、単語は12問まで
-      qs = tgt.kind === "grammar" ? shuffle(base) : shuffle(base).slice(0, VOCAB_PER_TEST);
+    if (tgt.kind === "exam") {
+      qs = buildExamQuestions(g, tgt, m);
     } else {
-      // 文法ターゲットは全問出題（5〜7問なので15分に収まる）。単語は12問抽出。
-      qs = tgt.kind === "grammar" ? shuffle(pool) : shuffle(pool).slice(0, VOCAB_PER_TEST);
+      const pool = getPool(g, tgt);
+      const base = m === "review"
+        ? (() => { const wrong = pool.filter((q) => records[q.id]?.lastWrong); return wrong.length ? wrong : pool; })()
+        : pool;
+      // 文法はストックから5問、単語は12問抽出。
+      qs = tgt.kind === "grammar" ? shuffle(base).slice(0, GRAMMAR_PER_TEST) : shuffle(base).slice(0, VOCAB_PER_TEST);
     }
+    qs = qs.map(shuffleChoices); // 選択肢の並び順もランダム化
     setGrade(g); setTarget(tgt); setMode(m);
     setQuestions(qs); setIdx(0); setSelected(null); setAnswered(false); setSessionResults([]);
     setTimeLeft(qs.length * SECONDS_PER_Q);
@@ -115,13 +193,14 @@ export default function EikenApp() {
           grade: g, key: t.key, name: t.name, struct: t.struct,
           total: t.questions.length, seen, lastCorrect,
           coverage: seen / t.questions.length,
-          rate: seen ? lastCorrect / seen : null,
-          masteredRatio: lastCorrect / t.questions.length,
+          // 習得率 = 直近3回のテスト正答率の重み付け平均
+          rate: weightedRate(sessionRecords[`${g}|${t.key}`]),
+          attempts: (sessionRecords[`${g}|${t.key}`] || []).length,
         };
       });
     });
     return map;
-  }, [records]);
+  }, [records, sessionRecords]);
 
   // ── 集計: 単語ユニット単位 ──
   const vocabStats = useMemo(() => {
@@ -135,13 +214,14 @@ export default function EikenApp() {
           grade: g, key: u, name: unit.name,
           total: unit.questions.length, seen, lastCorrect,
           coverage: seen / unit.questions.length,
-          rate: seen ? lastCorrect / seen : null,
-          masteredRatio: lastCorrect / unit.questions.length,
+          // 習得率 = 直近3回のテスト正答率の重み付け平均
+          rate: weightedRate(sessionRecords[`${g}|${u}`]),
+          attempts: (sessionRecords[`${g}|${u}`] || []).length,
         };
       });
     });
     return map;
-  }, [records]);
+  }, [records, sessionRecords]);
 
   // ── 級サマリ ──
   const gradeSummary = useMemo(() => {
@@ -198,18 +278,23 @@ export default function EikenApp() {
           <GradeMapView grade={grade} grammarStats={grammarStats} vocabStats={vocabStats}
             onStart={(tgt) => startTest(grade, tgt, "normal")}
             onReview={(tgt) => startTest(grade, tgt, "review")}
-            onBack={() => setView("home")} records={records} />
+            onBack={() => setView("home")} records={records} examRecords={examRecords} />
         )}
         {view === "test" && questions.length > 0 && (
           <TestView q={questions[idx]} idx={idx} total={questions.length} selected={selected} answered={answered}
             mode={mode} timeLeft={timeLeft} grade={grade} target={target}
             onSelect={setSelected} onSubmit={submitAnswer} onNext={nextQuestion} onQuit={() => setView("gradeMap")} />
         )}
-        {view === "result" && (
-          <ResultView results={sessionResults} grade={grade} target={target} mode={mode}
-            onReview={() => startTest(grade, target, "review")} onRetry={() => startTest(grade, target, "normal")}
-            onMap={() => setView("gradeMap")} onCurriculum={() => setView("curriculum")} />
-        )}
+        {view === "result" && (() => {
+          const nextKey = target?.kind === "grammar" ? nextGrammarTarget(grade, target.key) : null;
+          const nextName = nextKey ? BANK[grade].grammar.find((t) => t.key === nextKey).name : null;
+          return (
+            <ResultView results={sessionResults} grade={grade} target={target} mode={mode}
+              onReview={() => startTest(grade, target, "review")} onRetry={() => startTest(grade, target, "normal")}
+              onMap={() => setView("gradeMap")} onCurriculum={() => setView("curriculum")}
+              nextName={nextName} onNextTarget={() => nextKey && startTest(grade, { kind: "grammar", key: nextKey }, "normal")} />
+          );
+        })()}
         {view === "dashboard" && <DashboardView gradeSummary={gradeSummary} grammarStats={grammarStats} vocabStats={vocabStats} onJump={(g) => { setGrade(g); setView("gradeMap"); }} />}
         {view === "curriculum" && <CurriculumView curriculum={curriculum} onStudy={(g, tgt) => startTest(g, tgt, "review")} />}
       </main>
@@ -228,7 +313,7 @@ function HomeView({ grades, onPick }) {
         <div style={s.heroEyebrow}>文法ターゲットで網羅性を担保</div>
         <h1 style={s.heroTitle}>級を選び、文法項目ごとに実力を測る。</h1>
         <p style={s.heroLead}>
-          文法は「be動詞」「現在完了」「関係代名詞」のようなターゲット単位（各5〜7問）で習熟度を判定。
+          文法は「be動詞」「現在完了」「関係代名詞」のようなターゲット単位（各15問のストックから5問出題）で習熟度を判定。
           どの項目が穴かが一目で分かり、単語は基礎・応用ユニットでチェックします。間違いは記録され、カリキュラムが自動生成されます。
         </p>
       </section>
@@ -255,15 +340,46 @@ function HomeView({ grades, onPick }) {
 // ════════════════════════════════════════════════════════════
 // 級マップ（文法ターゲット一覧 + 単語ユニット）
 // ════════════════════════════════════════════════════════════
-function GradeMapView({ grade, grammarStats, vocabStats, onStart, onReview, onBack, records }) {
+function GradeMapView({ grade, grammarStats, vocabStats, onStart, onReview, onBack, records, examRecords }) {
   const s = STYLES;
   const G = BANK[grade];
+  const E = EXAMS[grade];
   return (
     <div>
       <button style={s.backLink} onClick={onBack}>← 級の選択へ</button>
       <h2 style={s.pageTitle}>{G.label} <span style={s.pageTitleSub}>{G.sub}</span></h2>
 
-      <h3 style={s.sectionLabel}><span style={{ ...s.sectionDot, background: GRAMMAR_TONE }} />文法ターゲット（各項目を個別にチェック）</h3>
+      <h3 style={s.sectionLabel}><span style={{ ...s.sectionDot, background: EXAM_TONE }} />テスト（中間4本・総合1本）</h3>
+      <div style={s.examGrid}>
+        {E.mid.map((ex) => {
+          const rec = examRecords[ex.key];
+          return (
+            <button key={ex.key} style={s.examCard} className="lift" onClick={() => onStart({ kind: "exam", examType: "mid", key: ex.key })}>
+              <div style={s.examTop}>
+                <span style={s.examKind}>中間</span>
+                {rec && <span style={{ ...s.badgeSm, background: rec.pass ? "#1d8a5b" : "#c0392b" }}>{rec.pass ? "合格" : "不合格"}</span>}
+              </div>
+              <div style={s.examName}>{ex.name}</div>
+              <div style={s.examMeta}>{rec ? `直近 ${Math.round(rec.rate * 100)}% · ${rec.correct}/${rec.total}` : `${MID_PICK}問 · 合格${Math.round(MID_PASS * 100)}%`}</div>
+            </button>
+          );
+        })}
+        {(() => {
+          const rec = examRecords[E.final.key];
+          return (
+            <button key={E.final.key} style={{ ...s.examCard, ...s.examCardFinal }} className="lift" onClick={() => onStart({ kind: "exam", examType: "final", key: E.final.key })}>
+              <div style={s.examTop}>
+                <span style={{ ...s.examKind, background: EXAM_TONE, color: "#fff" }}>総合</span>
+                {rec && <span style={{ ...s.badgeSm, background: rec.pass ? "#1d8a5b" : "#c0392b" }}>{rec.pass ? "合格" : "不合格"}</span>}
+              </div>
+              <div style={s.examName}>{E.final.name}</div>
+              <div style={s.examMeta}>{rec ? `直近 ${Math.round(rec.rate * 100)}% · ${rec.correct}/${rec.total}` : `${FINAL_GRAMMAR_PICK + FINAL_VOCAB_PICK}問（文法+単語）· 合格${Math.round(FINAL_PASS * 100)}%`}</div>
+            </button>
+          );
+        })()}
+      </div>
+
+      <h3 style={{ ...s.sectionLabel, marginTop: 30 }}><span style={{ ...s.sectionDot, background: GRAMMAR_TONE }} />文法ターゲット（各項目を個別にチェック）</h3>
       <div style={s.targetGrid}>
         {G.grammar.map((t) => {
           const st = grammarStats[`${grade}|${t.key}`];
@@ -278,7 +394,7 @@ function GradeMapView({ grade, grammarStats, vocabStats, onStart, onReview, onBa
               <div style={s.targetStruct}>{t.struct}</div>
               <div style={s.meterTrackSm}><div style={{ ...s.meterFill, width: `${(st.rate || 0) * 100}%`, background: m ? m.color : "#e0e5ee" }} /></div>
               <div style={s.targetFoot}>
-                <span style={s.targetMeta}>{st.rate === null ? `${t.questions.length}問` : `${Math.round(st.rate * 100)}% · ${st.seen}/${st.total}`}</span>
+                <span style={s.targetMeta}>{st.rate === null ? `${GRAMMAR_PER_TEST}問 · 全${t.questions.length}問から` : `${Math.round(st.rate * 100)}% · ${st.seen}/${st.total}`}</span>
                 <span style={s.targetBtns}>
                   <button style={s.miniStart} onClick={() => onStart({ kind: "grammar", key: t.key })}>受験</button>
                   {wrong > 0 && <button style={s.miniReview} onClick={() => onReview({ kind: "grammar", key: t.key })}>復習{wrong}</button>}
@@ -294,7 +410,7 @@ function GradeMapView({ grade, grammarStats, vocabStats, onStart, onReview, onBa
         {VOCAB_UNITS.map((u) => {
           const meta = VOCAB_META[u];
           const st = vocabStats[`${grade}|${u}`];
-          const m = st.rate === null ? null : (() => { const b = masteryLabel(st.rate); return b.text === "習得" && st.masteredRatio < 0.7 ? { text: "あと一歩", color: "#c98a16" } : b; })();
+          const m = st.rate === null ? null : masteryLabel(st.rate);
           const wrong = BANK[grade].vocab[u].questions.filter((q) => records[q.id]?.lastWrong).length;
           const ask = Math.min(VOCAB_PER_TEST, st.total);
           return (
@@ -322,12 +438,13 @@ function GradeMapView({ grade, grammarStats, vocabStats, onStart, onReview, onBa
 // テスト
 // ════════════════════════════════════════════════════════════
 function targetTitle(grade, target) {
+  if (target.kind === "exam") { const e = findExam(grade, target); return e ? e.name : ""; }
   if (target.kind === "grammar") { const t = BANK[grade].grammar.find((x) => x.key === target.key); return t ? t.name : ""; }
   return BANK[grade].vocab[target.key].name;
 }
 function TestView({ q, idx, total, selected, answered, mode, timeLeft, grade, target, onSelect, onSubmit, onNext, onQuit }) {
   const s = STYLES;
-  const tone = target.kind === "grammar" ? GRAMMAR_TONE : VOCAB_META[target.key].tone;
+  const tone = target.kind === "exam" ? EXAM_TONE : target.kind === "grammar" ? GRAMMAR_TONE : VOCAB_META[target.key].tone;
   const low = timeLeft <= 60;
   return (
     <div style={s.testWrap}>
@@ -370,11 +487,17 @@ function TestView({ q, idx, total, selected, answered, mode, timeLeft, grade, ta
 // ════════════════════════════════════════════════════════════
 // 結果
 // ════════════════════════════════════════════════════════════
-function ResultView({ results, grade, target, mode, onReview, onRetry, onMap, onCurriculum }) {
+function ResultView({ results, grade, target, mode, onReview, onRetry, onMap, onCurriculum, nextName, onNextTarget }) {
   const s = STYLES;
   const correct = results.filter((r) => r.correct).length;
   const rate = results.length ? correct / results.length : 0;
-  const m = masteryLabel(rate);
+  const isExam = target.kind === "exam";
+  const passLine = examPassLine(target);
+  const passed = rate >= passLine;
+  // exam は合否ベース、それ以外は習熟ラベル
+  const m = isExam
+    ? { text: passed ? "合格" : "不合格", color: passed ? "#1d8a5b" : "#c0392b" }
+    : masteryLabel(rate);
   const wrong = results.filter((r) => !r.correct);
   const deg = Math.round(rate * 360);
   return (
@@ -386,7 +509,9 @@ function ResultView({ results, grade, target, mode, onReview, onRetry, onMap, on
         <div>
           <div style={s.resultGrade}>{BANK[grade].label} · {targetTitle(grade, target)}{mode === "review" ? "（復習）" : ""}</div>
           <span style={{ ...s.badge, background: m.color, marginTop: 6, display: "inline-block" }}>{m.text}</span>
-          <p style={s.resultMsg}>{rate >= 0.85 ? "この項目はよく定着しています。次のターゲットへ進みましょう。" : rate >= 0.6 ? "あと一歩。間違えた問題を復習で固めましょう。" : "この項目は弱点です。解説を読み、復習で繰り返しましょう。"}</p>
+          {isExam
+            ? <p style={s.resultMsg}>合格ライン {Math.round(passLine * 100)}%。{passed ? "合格です。よく仕上がっています。" : "あと少し。間違えた問題を復習で固めて再挑戦しましょう。"}</p>
+            : <p style={s.resultMsg}>{rate >= 0.85 ? "この項目はよく定着しています。次のターゲットへ進みましょう。" : rate >= 0.6 ? "あと一歩。間違えた問題を復習で固めましょう。" : "この項目は弱点です。解説を読み、復習で繰り返しましょう。"}</p>}
         </div>
       </div>
       {wrong.length > 0 && (
@@ -402,6 +527,7 @@ function ResultView({ results, grade, target, mode, onReview, onRetry, onMap, on
         </div>
       )}
       <div style={s.resultActions}>
+        {nextName && <button style={s.primaryBtn} onClick={onNextTarget}>次のターゲットへ：{nextName} →</button>}
         {wrong.length > 0 && <button style={s.primaryBtn} onClick={onReview}>間違いだけ復習</button>}
         <button style={s.ghostBtn} onClick={onRetry}>もう一度</button>
         <button style={s.ghostBtn} onClick={onCurriculum}>カリキュラム</button>
@@ -579,6 +705,14 @@ const STYLES = {
   unitBtns: { display: "flex", gap: 8 },
   unitStart: { flex: 1, padding: "10px", borderRadius: 10, border: "none", color: "#fff", fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "inherit" },
   unitReview: { padding: "10px 14px", borderRadius: 10, border: "1.5px solid #d9e0ec", background: "#fff", color: NAVY, fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "inherit", whiteSpace: "nowrap" },
+
+  examGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(210px,1fr))", gap: 11 },
+  examCard: { background: "#fff", borderRadius: 12, padding: 15, border: "1px solid #e8edf6", borderLeft: `4px solid ${EXAM_TONE}`, cursor: "pointer", textAlign: "left", fontFamily: "inherit" },
+  examCardFinal: { background: "#f7f5fe", borderColor: "#ddd5f5" },
+  examTop: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 8 },
+  examKind: { fontSize: 11, fontWeight: 800, color: EXAM_TONE, background: "#efeafb", padding: "2px 9px", borderRadius: 6 },
+  examName: { fontSize: 14.5, fontWeight: 800, lineHeight: 1.35, marginBottom: 6 },
+  examMeta: { fontSize: 11.5, color: "#8a94a6", fontWeight: 600 },
 
   testWrap: { maxWidth: 620, margin: "0 auto" },
   testHead: { display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 10 },
