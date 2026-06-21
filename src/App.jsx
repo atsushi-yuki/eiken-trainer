@@ -1,6 +1,9 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { BANK, EXAMS } from "./bank.js";
+import { auth, googleProvider, firebaseReady } from "./firebase.js";
+import { onAuthStateChanged, signInWithPopup, signOut } from "firebase/auth";
+import { readLocal, convertLegacy, mergeData, loadCloud, saveCloud } from "./store.js";
 
 // ════════════════════════════════════════════════════════════
 // 定義
@@ -69,6 +72,16 @@ function nextGrammarTarget(grade, key) {
   return i >= 0 && i + 1 < list.length ? list[i + 1].key : null;
 }
 
+// 旧フォーマット変換用: 全ターゲット/ユニットの { sessionKey, questionIds } 一覧
+function legacyTargets() {
+  const out = [];
+  GRADE_ORDER.forEach((g) => {
+    BANK[g].grammar.forEach((t) => out.push({ sessionKey: `${g}|${t.key}`, questionIds: t.questions.map((q) => q.id) }));
+    VOCAB_UNITS.forEach((u) => out.push({ sessionKey: `${g}|${u}`, questionIds: BANK[g].vocab[u].questions.map((q) => q.id) }));
+  });
+  return out;
+}
+
 // ════════════════════════════════════════════════════════════
 // メイン
 // ════════════════════════════════════════════════════════════
@@ -89,15 +102,66 @@ export default function EikenApp() {
   const [examRecords, setExamRecords] = useState({});
   // ターゲット/ユニットごとのテスト正答率の履歴（直近3回ぶんを習得率に使う）。
   const [sessionRecords, setSessionRecords] = useState({});
+  // 認証・クラウド同期
+  const [user, setUser] = useState(null);        // Googleアカウント（未ログインは null）
+  const [syncMsg, setSyncMsg] = useState("");     // 同期ステータスの一時表示
+  const userRef = useRef(null);
+  const dataRef = useRef({ records: {}, examRecords: {}, sessionRecords: {} });
+  const saveTimer = useRef(null);
+
+  // 最新データを ref に保持（デバウンス保存で参照する）
+  useEffect(() => { dataRef.current = { records, examRecords, sessionRecords }; }, [records, examRecords, sessionRecords]);
+
+  // ログイン中のみ、1.5秒デバウンスで Firestore に保存
+  function scheduleCloudSave() {
+    if (!userRef.current) return;
+    clearTimeout(saveTimer.current);
+    saveTimer.current = setTimeout(() => {
+      saveCloud(userRef.current.uid, dataRef.current).catch(() => {});
+    }, 1500);
+  }
 
   useEffect(() => {
     try { const raw = window.localStorage?.getItem(STORAGE_KEY); if (raw) setRecords(JSON.parse(raw)); } catch (e) {}
     try { const raw = window.localStorage?.getItem(EXAM_STORAGE_KEY); if (raw) setExamRecords(JSON.parse(raw)); } catch (e) {}
     try { const raw = window.localStorage?.getItem(SESSION_STORAGE_KEY); if (raw) setSessionRecords(JSON.parse(raw)); } catch (e) {}
   }, []);
-  function persist(next) { setRecords(next); try { window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(next)); } catch (e) {} }
-  function persistExams(next) { setExamRecords(next); try { window.localStorage?.setItem(EXAM_STORAGE_KEY, JSON.stringify(next)); } catch (e) {} }
-  function persistSessions(next) { setSessionRecords(next); try { window.localStorage?.setItem(SESSION_STORAGE_KEY, JSON.stringify(next)); } catch (e) {} }
+  function persist(next) { setRecords(next); try { window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(next)); } catch (e) {} scheduleCloudSave(); }
+  function persistExams(next) { setExamRecords(next); try { window.localStorage?.setItem(EXAM_STORAGE_KEY, JSON.stringify(next)); } catch (e) {} scheduleCloudSave(); }
+  function persistSessions(next) { setSessionRecords(next); try { window.localStorage?.setItem(SESSION_STORAGE_KEY, JSON.stringify(next)); } catch (e) {} scheduleCloudSave(); }
+
+  // ── 認証 & 起動時のクラウド同期/マイグレーション ──
+  useEffect(() => {
+    if (!firebaseReady) return; // 設定未入力なら localStorage のみで動作
+    const unsub = onAuthStateChanged(auth, async (u) => {
+      userRef.current = u;
+      setUser(u);
+      if (!u) return;
+      try {
+        setSyncMsg("同期中…");
+        // ローカル（旧フォーマットなら変換）とクラウドを統合し、双方に反映
+        const local = convertLegacy(readLocal(), legacyTargets());
+        const cloud = await loadCloud(u.uid);
+        const merged = mergeData(local, cloud);
+        setRecords(merged.records); setExamRecords(merged.examRecords); setSessionRecords(merged.sessionRecords);
+        dataRef.current = merged;
+        try {
+          window.localStorage?.setItem(STORAGE_KEY, JSON.stringify(merged.records));
+          window.localStorage?.setItem(EXAM_STORAGE_KEY, JSON.stringify(merged.examRecords));
+          window.localStorage?.setItem(SESSION_STORAGE_KEY, JSON.stringify(merged.sessionRecords));
+        } catch (e) {}
+        await saveCloud(u.uid, merged);
+        setSyncMsg("同期しました");
+      } catch (e) {
+        setSyncMsg("同期に失敗しました");
+      }
+      setTimeout(() => setSyncMsg(""), 2500);
+    });
+    return () => unsub();
+  }, []);
+
+  async function login() { try { await signInWithPopup(auth, googleProvider); } catch (e) { setSyncMsg("ログインに失敗しました"); setTimeout(() => setSyncMsg(""), 2500); } }
+  async function logout() { try { await signOut(auth); } catch (e) {} }
 
   // ── ブラウザの戻る/進む対応 ──
   // 画面遷移ごとに履歴へ積み、popstate で前の画面に戻す。
@@ -296,6 +360,7 @@ export default function EikenApp() {
           <NavBtn active={view === "home" || view === "gradeMap"} onClick={() => setView("home")}>ホーム</NavBtn>
           <NavBtn active={view === "dashboard"} onClick={() => setView("dashboard")}>分析</NavBtn>
           <NavBtn active={view === "curriculum"} onClick={() => setView("curriculum")}>カリキュラム</NavBtn>
+          <AuthControl ready={firebaseReady} user={user} syncMsg={syncMsg} onLogin={login} onLogout={logout} />
         </nav>
       </header>
 
@@ -656,6 +721,27 @@ function CurriculumView({ curriculum, onStudy }) {
 
 function NavBtn({ active, onClick, children }) { return <button onClick={onClick} style={{ ...STYLES.navBtn, ...(active ? STYLES.navBtnActive : {}) }}>{children}</button>; }
 
+// ヘッダーのログイン/ログアウト・同期状態
+function AuthControl({ ready, user, syncMsg, onLogin, onLogout }) {
+  const s = STYLES;
+  if (!ready) return null; // Firebase 未設定なら非表示
+  return (
+    <span style={s.authWrap}>
+      {syncMsg && <span style={s.syncMsg}>{syncMsg}</span>}
+      {user ? (
+        <>
+          {user.photoURL
+            ? <img src={user.photoURL} alt="" style={s.authAvatar} referrerPolicy="no-referrer" />
+            : <span style={s.authAvatarFallback}>{(user.displayName || "U").slice(0, 1)}</span>}
+          <button style={s.authBtn} onClick={onLogout}>ログアウト</button>
+        </>
+      ) : (
+        <button style={s.authBtnPrimary} onClick={onLogin}>Googleでログイン</button>
+      )}
+    </span>
+  );
+}
+
 const CSS = `
   * { box-sizing: border-box; }
   .lift { transition: transform .15s, box-shadow .15s; }
@@ -681,6 +767,12 @@ const STYLES = {
   nav: { display: "flex", gap: 4 },
   navBtn: { padding: "8px 13px", borderRadius: 8, border: "none", cursor: "pointer", background: "transparent", color: "#9fb0d0", fontSize: 13.5, fontWeight: 600, fontFamily: "inherit" },
   navBtnActive: { background: "rgba(43,95,255,.28)", color: "#fff" },
+  authWrap: { display: "flex", alignItems: "center", gap: 8, marginLeft: 6 },
+  syncMsg: { fontSize: 11.5, color: "#9fb0d0" },
+  authAvatar: { width: 28, height: 28, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,.4)" },
+  authAvatarFallback: { width: 28, height: 28, borderRadius: "50%", background: BLUE, color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13 },
+  authBtn: { padding: "7px 11px", borderRadius: 8, border: "1px solid rgba(255,255,255,.3)", background: "transparent", color: "#cdd6e6", fontSize: 12.5, fontWeight: 600, cursor: "pointer", fontFamily: "inherit" },
+  authBtnPrimary: { padding: "8px 13px", borderRadius: 8, border: "none", background: BLUE, color: "#fff", fontSize: 12.5, fontWeight: 700, cursor: "pointer", fontFamily: "inherit" },
   main: { maxWidth: 940, margin: "0 auto", padding: "26px 18px 64px" },
 
   hero: { marginBottom: 26 },
