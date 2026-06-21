@@ -3,7 +3,7 @@ name: Deploy to Firebase Hosting
 on:
   push:
     branches:
-      - main # または master。お使いのメインブランチ名に合わせてください
+      - main # お使いのメインブランチ名（masterなど）に合わせてください
 
 jobs:
   build_and_deploy:
@@ -15,7 +15,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-level: 20 # もしNodeのバージョンを指定したい場合は変更してください
+          node-version: 20
           cache: 'npm'
 
       - name: Install dependencies and Build
@@ -29,3 +29,4 @@ jobs:
           args: deploy --only hosting
         env:
           FIREBASE_TOKEN: ${{ secrets.FIREBASE_TOKEN }}
+          PROJECT_ID: eiken-trainer # ★ここを追加してください
